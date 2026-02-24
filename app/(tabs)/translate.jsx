@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   FlatList,
   StyleSheet,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -199,163 +198,6 @@ const CheckersGame = () => {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
       <Text>ዳማ ኣብ ቀረባ እዋን ክለጠፍ እዩ</Text>
-    </View>
-  );
-};
-
-/* -----------------------------
-   Dictionary (unchanged)
------------------------------- */
-const Dictionary = () => {
-  const [search, setSearch] = useState("");
-  const [openId, setOpenId] = useState(null);
-
-  const WORDS = useMemo(
-    () => [
-      {
-        id: "1",
-        word: "ሰላም",
-        definitions: [
-          "ምስ ሰብ ክትራኸብ ከለኻ እትጥቀመሉ ሰላምታ",
-          "ጸቕጢ ከም ዘይብልካ ንምግላጽ ክትጥቀመሉ ትኽእል ኢኻ",
-        ],
-        examples: ["ሰላም ከመይ ኣለኻ", "ሰላም ኢና ዘለና"],
-        synonyms: ["ሰላማዊ", "ዕርቂ"],
-        antonyms: ["ጦርነት", "ዘይሰላም", "ባእሲ"],
-      },
-        {
-        id: "2",
-        word: "ሰላም",
-        definitions: [
-          "ምስ ሰብ ክትራኸብ ከለኻ እትጥቀመሉ ሰላምታ",
-          "ጸቕጢ ከም ዘይብልካ ንምግላጽ ክትጥቀመሉ ትኽእል ኢኻ",
-        ],
-        examples: ["ሰላም ከመይ ኣለኻ", "ሰላም ኢና ዘለና"],
-        synonyms: ["ሰላማዊ", "ዕርቂ"],
-        antonyms: ["ጦርነት", "ዘይሰላም", "ባእሲ"],
-      },
-      {
-        id: "3",
-        word: "ትምህርቲ",
-        definitions: ["Education; learning or teaching.", "Training or study."],
-        examples: ["ትምህርቲ ንህይወት ኣለዎ ኣገዳሲ ተሳትፎ።"],
-        synonyms: ["ስልጠና", "ምምሃር"],
-        antonyms: ["ድንቁርና"],
-      },
-    ],
-    []
-  );
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return WORDS;
-    return WORDS.filter((w) =>
-      [
-        w.word,
-        ...w.definitions,
-        ...w.examples,
-        ...(w.synonyms || []),
-        ...(w.antonyms || []),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q)
-    );
-  }, [search, WORDS]);
-
-  const toggleOpen = (id) => {
-    setOpenId((prev) => (prev === id ? null : id));
-  };
-
-  const renderBullets = (arr, textStyle) =>
-    (arr || []).map((t, idx) => (
-      <View key={idx} style={styles.bulletRow}>
-        <Text style={styles.bullet}>•</Text>
-        <Text style={textStyle}>{t}</Text>
-      </View>
-    ));
-
-  const renderItem = ({ item }) => {
-    const isOpen = openId === item.id;
-
-    return (
-      <TouchableOpacity
-        activeOpacity={0.92}
-        onPress={() => toggleOpen(item.id)}
-        style={styles.dictCard}
-      >
-        <View style={styles.dictHeaderRow}>
-          <Text style={styles.dictWord}>{item.word}</Text>
-          <Text style={styles.dictChevron}>{isOpen ? "▲" : "▼"}</Text>
-        </View>
-
-        <Text style={styles.dictLabel}>ትርጉም</Text>
-        {renderBullets(item.definitions, styles.dictText)}
-
-        <Text style={[styles.dictLabel, { marginTop: 8 }]}>ኣብነት</Text>
-        {renderBullets(item.examples, styles.dictExample)}
-
-        {isOpen && (
-          <>
-            <Text style={[styles.dictLabel, { marginTop: 10 }]}>ተመሳሳሊ</Text>
-            {item.synonyms && item.synonyms.length ? (
-              renderBullets(item.synonyms, styles.dictText)
-            ) : (
-              <Text style={styles.dictText}>—</Text>
-            )}
-
-            <Text style={[styles.dictLabel, { marginTop: 10 }]}>ተጻራሪ</Text>
-            {item.antonyms && item.antonyms.length ? (
-              renderBullets(item.antonyms, styles.dictText)
-            ) : (
-              <Text style={styles.dictText}>—</Text>
-            )}
-          </>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <View style={styles.dictSearchRow}>
-        <TextInput
-          value={search}
-          onChangeText={(t) => {
-            setSearch(t);
-            setOpenId(null);
-          }}
-          placeholder="ቃል ድለዩ..."
-          placeholderTextColor="#999"
-          style={styles.dictSearchInput}
-          autoCorrect={false}
-          autoCapitalize="none"
-        />
-        {search.length > 0 ? (
-          <TouchableOpacity
-            onPress={() => {
-              setSearch("");
-              setOpenId(null);
-            }}
-            style={styles.dictClearBtn}
-          >
-            <Text style={styles.dictClearText}>ምጽራይ</Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
-
-      <FlatList
-        data={filtered}
-        keyExtractor={(it) => it.id}
-        renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 18 }}
-        ListEmptyComponent={
-          <View style={{ paddingTop: 30, alignItems: "center" }}>
-            <Text style={{ color: "#666" }}>No matches.</Text>
-          </View>
-        }
-      />
     </View>
   );
 };
@@ -588,7 +430,6 @@ export default function ToolsScreen() {
           placeholder="Select chat option"
         >
           <DropdownSearch.Item label="ትርጉም" value="translator" />
-          <DropdownSearch.Item label="መዝገበ ቃላት" value="dictionary" />
           <DropdownSearch.Item label="ካልኩሌተር" value="calculator" />
           <DropdownSearch.Item label="ዳማ" value="dama" />
         </DropdownSearch>
@@ -681,7 +522,6 @@ export default function ToolsScreen() {
 
         {selectedChatOption === "calculator" && <Calculator />}
         {selectedChatOption === "dama" && <CheckersGame />}
-        {selectedChatOption === "dictionary" && <Dictionary />}
       </View>
     </SafeAreaView>
   );
@@ -746,89 +586,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "900",
     color: "#111",
-  },
-
-  /* ---------- Dictionary styles ---------- */
-  dictSearchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: Platform.OS === "ios" ? 10 : 6,
-    backgroundColor: "#fafafa",
-    marginBottom: 10,
-  },
-  dictSearchInput: {
-    flex: 1,
-    color: "#111",
-    fontSize: 16,
-    paddingVertical: 6,
-  },
-  dictClearBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: "#eee",
-    marginLeft: 8,
-  },
-  dictClearText: {
-    color: "#111",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  dictCard: {
-    borderWidth: 1,
-    borderColor: "#e6e6e6",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 10,
-  },
-  dictHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  dictWord: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#111",
-  },
-  dictChevron: {
-    fontSize: 12,
-    fontWeight: "900",
-    color: "#666",
-    paddingLeft: 10,
-  },
-  dictLabel: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#444",
-    marginBottom: 4,
-  },
-  dictText: {
-    fontSize: 14,
-    color: "#222",
-    lineHeight: 20,
-  },
-  dictExample: {
-    fontSize: 14,
-    color: "#222",
-    lineHeight: 20,
-    fontStyle: "italic",
-  },
-  bulletRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 4,
-  },
-  bullet: {
-    width: 16,
-    color: "#444",
-    fontWeight: "900",
-    lineHeight: 20,
   },
 });

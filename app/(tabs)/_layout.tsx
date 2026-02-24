@@ -1,35 +1,31 @@
-import { Tabs } from 'expo-router';
+import { NativeTabs, Icon, Label, Badge } from 'expo-router/unstable-native-tabs';
 import React from 'react';
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="translate"
-        options={{
-          title: 'ትርጉም',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-    </Tabs>
+    <NativeTabs>
+          <NativeTabs.Trigger name="index">
+            <Label>ደጀን</Label>
+            <Icon sf={"house.fill"} 
+            drawable="ic_menu_mylocation" />
+          </NativeTabs.Trigger>
+
+          <NativeTabs.Trigger name="translate">
+            <Label>ትርጉም</Label>
+            <Icon sf={"paperplane.fill"} 
+            drawable="ic_menu_manage" />
+          </NativeTabs.Trigger>
+          
+
+          <NativeTabs.Trigger name="dictionary">
+            <Label>መዝገብ</Label>
+            <Icon sf={"paperplane.fill"} 
+            drawable="ic_menu_manage" />
+          </NativeTabs.Trigger>
+    
+
+          
+    </NativeTabs>
   );
 }
