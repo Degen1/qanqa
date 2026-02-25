@@ -23,6 +23,13 @@ export default function TabLayout() {
             <Icon sf={"paperplane.fill"} 
             drawable="ic_menu_manage" />
           </NativeTabs.Trigger>
+
+
+           <NativeTabs.Trigger name="settings">
+            <Label>መማረጺ</Label>
+            <Icon sf={"paperplane.fill"} 
+            drawable="ic_menu_manage" />
+          </NativeTabs.Trigger>
     
 
           
