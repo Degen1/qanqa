@@ -1,98 +1,91 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import SegmentedControl from '@react-native-segmented-control/segmented-control';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { ThemePreference, useThemePreference } from '@/contexts/theme-preference-context';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export default function HomeScreen() {
+const THEME_OPTIONS: ThemePreference[] = ['light', 'system', 'dark'];
+const THEME_LABELS = ['ብርሃን', 'ተቀያሪ', 'ጸልማት'];
+
+export default function SettingsScreen() {
+  const { preference, setPreference } = useThemePreference();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const selectedIndex = THEME_OPTIONS.indexOf(preference);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}>
+      <View style={[styles.card, isDark ? styles.cardDark : styles.cardLight]}>
+        <Text style={[styles.title, isDark ? styles.titleDark : styles.titleLight]}>ልጪ</Text>
+        
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <SegmentedControl
+          values={THEME_LABELS}
+          selectedIndex={selectedIndex >= 0 ? selectedIndex : 1}
+          onChange={(event) => {
+            const nextPreference = THEME_OPTIONS[event.nativeEvent.selectedSegmentIndex] ?? 'system';
+            setPreference(nextPreference);
+          }}
+          style={styles.segmented}
+          tintColor={isDark ? '#334155' : '#e5e7eb'}
+          backgroundColor={isDark ? '#0f172a' : '#f3f4f6'}
+          fontStyle={{ color: isDark ? '#e2e8f0' : '#1f2937' }}
+          activeFontStyle={{ color: isDark ? '#ffffff' : '#111827', fontWeight: '700' }}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    padding: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  containerLight: {
+    backgroundColor: '#ffffff',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  containerDark: {
+    backgroundColor: '#020617',
+  },
+  card: {
+    borderRadius: 12,
+    //borderWidth: 1,
+    padding: 16,
+  },
+  cardLight: {
+    backgroundColor: '#ffffff',
+    borderColor: '#e5e7eb',
+  },
+  cardDark: {
+    //backgroundColor: '#0b1220',
+   // borderColor: '#1e293b',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  titleLight: {
+    color: '#111827',
+  },
+  titleDark: {
+    color: '#f8fafc',
+  },
+  subtitle: {
+    fontSize: 14,
+    marginBottom: 14,
+  },
+  subtitleLight: {
+    color: '#4b5563',
+  },
+  subtitleDark: {
+    color: '#94a3b8',
+  },
+  segmented: {
+    height: 46,
   },
 });
