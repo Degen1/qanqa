@@ -1,13 +1,40 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import {
-  View,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
-  StyleSheet,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+
+const LIGHT_THEME = {
+  background: "#ffffff",
+  surface: "#f8fafc",
+  surfaceStrong: "#ffffff",
+  border: "#d1d5db",
+  text: "#111827",
+  muted: "#667085",
+  button: "#2563eb",
+  buttonText: "#ffffff",
+};
+
+const DARK_THEME = {
+  background: "#020617",
+  surface: "#0b1220",
+  surfaceStrong: "#0f172a",
+  border: "#334155",
+  text: "#f8fafc",
+  muted: "#94a3b8",
+  button: "#3b82f6",
+  buttonText: "#f8fafc",
+};
 
 /* -----------------------------
    DropdownSearch (same as your original)
@@ -20,6 +47,8 @@ const DropdownSearch = (props) => {
     itemStyle,
     placeholder,
     disableSearch,
+    palette,
+    textColor,
   } = props;
 
   const items = React.Children.toArray(props.children).map((child) => ({
@@ -29,6 +58,13 @@ const DropdownSearch = (props) => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const triggerRef = useRef(null);
+  const [dropdownFrame, setDropdownFrame] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
 
   const filtered = disableSearch
     ? items
@@ -37,170 +73,114 @@ const DropdownSearch = (props) => {
       );
 
   const selectedItem = items.find((item) => item.value === selectedValue);
+  const closeDropdown = () => {
+    setIsOpen(false);
+    setSearchText("");
+  };
+  const openDropdown = () => {
+    if (!triggerRef.current) {
+      setIsOpen(true);
+      return;
+    }
+    triggerRef.current.measureInWindow((x, y, width, height) => {
+      setDropdownFrame({ x, y, width, height });
+      setIsOpen(true);
+    });
+  };
 
   return (
     <View style={{ marginBottom: 5 }}>
-      <TouchableOpacity
-        onPress={() => setIsOpen(true)}
-        style={[
-          style,
-          {
-            padding: 10,
-            backgroundColor: "#f2f2f7",
-            borderRadius: 5,
-          },
-        ]}
-        activeOpacity={0.9}
-      >
-        <Text style={[itemStyle, { textAlign: "center" }]}>
-          {selectedItem ? selectedItem.label : placeholder || "Select an option"}
-        </Text>
-      </TouchableOpacity>
+      <View ref={triggerRef} collapsable={false}>
+        <TouchableOpacity
+          onPress={openDropdown}
+          style={[
+            style,
+            {
+              height: 45,
+              backgroundColor: palette.surface,
+              borderWidth: 1,
+              borderColor: palette.border,
+              borderRadius: 20,
+              justifyContent: "center",
+              alignItems: "center",
+              paddingHorizontal: 12,
+            },
+          ]}
+          activeOpacity={0.9}>
+          <Text style={[itemStyle, { textAlign: "center" }]}>
+            {selectedItem ? selectedItem.label : placeholder || "Select an option"}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {isOpen && (
-        <View
-          style={{
-            position: "absolute",
-            top: 50,
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-            backgroundColor: "#fff",
-            maxHeight: 150,
-          }}
-        >
-          {!disableSearch && (
-            <TextInput
-              placeholder="ድለዩ..."
-              value={searchText}
-              onChangeText={(text) => setSearchText(text)}
-              style={{
-                borderBottomWidth: 1,
-                borderColor: "#ccc",
-                padding: 8,
-              }}
-              autoFocus
-            />
-          )}
-
-          <FlatList
-            data={filtered}
-            keyExtractor={(item) => item.value.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => {
-                  onValueChange(item.value);
-                  setIsOpen(false);
-                  setSearchText("");
+        <Modal transparent visible animationType="none" onRequestClose={closeDropdown}>
+          <Pressable style={styles.dropdownBackdrop} onPress={closeDropdown} />
+          <View
+            style={{
+              position: "absolute",
+              top: dropdownFrame.y + dropdownFrame.height + 6,
+              left: dropdownFrame.x,
+              width: dropdownFrame.width,
+              zIndex: 1000,
+              backgroundColor: palette.surfaceStrong,
+              borderWidth: 1,
+              borderColor: palette.border,
+              borderRadius: 20,
+              maxHeight: 260,
+              padding: 8,
+            }}>
+            {!disableSearch && (
+              <TextInput
+                placeholder="ድለዩ..."
+                value={searchText}
+                onChangeText={(text) => setSearchText(text)}
+                style={{
+                  height: 45,
+                  borderWidth: 1,
+                  borderColor: palette.border,
+                  borderRadius: 20,
+                  color: textColor,
+                  paddingHorizontal: 12,
+                  textAlignVertical: "center",
+                  textAlign: "left",
                 }}
-                style={{ padding: 10 }}
-              >
-                <Text>{item.label}</Text>
-              </TouchableOpacity>
+                placeholderTextColor={palette.muted}
+                autoFocus
+              />
             )}
-          />
-        </View>
+
+            <FlatList
+              data={filtered}
+              keyExtractor={(item) => item.value.toString()}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    onValueChange(item.value);
+                    closeDropdown();
+                  }}
+                  style={{
+                    height: 45,
+                    borderRadius: 20,
+                    justifyContent: "center",
+                    alignItems: "flex-start",
+                    paddingHorizontal: 12,
+                  }}>
+                  <Text style={{ color: textColor, textAlign: "left" }}>{item.label}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </Modal>
       )}
     </View>
   );
 };
-DropdownSearch.Item = () => null;
-
-/* -----------------------------
-   Calculator (original)
------------------------------- */
-const Calculator = () => {
-  const [display, setDisplay] = useState("");
-
-  const handlePress = (value) => {
-    if (value === "C") {
-      setDisplay("");
-    } else if (value === "=") {
-      try {
-        // eslint-disable-next-line no-eval
-        const result = eval(display);
-        setDisplay(result.toString());
-      } catch (e) {
-        setDisplay("Error");
-      }
-    } else {
-      setDisplay(display + value);
-    }
-  };
-
-  const buttons = [
-    ["C", "/", "*", "Del"],
-    ["7", "8", "9", "-"],
-    ["4", "5", "6", "+"],
-    ["1", "2", "3", "="],
-    ["0", ".", "", ""],
-  ];
-
-  return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <View
-        style={{
-          backgroundColor: "#000",
-          width: "90%",
-          padding: 20,
-          borderRadius: 10,
-          marginBottom: 20,
-        }}
-      >
-        <Text style={{ fontSize: 32, color: "#fff", textAlign: "right" }}>
-          {display}
-        </Text>
-      </View>
-
-      <View style={{ width: "90%" }}>
-        {buttons.map((row, rowIndex) => (
-          <View
-            key={rowIndex}
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              marginBottom: 10,
-            }}
-          >
-            {row.map((btn, colIndex) => (
-              <TouchableOpacity
-                key={colIndex}
-                style={{
-                  flex: 1,
-                  margin: 5,
-                  backgroundColor: "#333",
-                  padding: 20,
-                  borderRadius: 10,
-                  alignItems: "center",
-                }}
-                onPress={() => {
-                  if (btn === "Del") {
-                    setDisplay(display.slice(0, -1));
-                  } else if (btn !== "") {
-                    handlePress(btn);
-                  }
-                }}
-              >
-                <Text style={{ fontSize: 24, color: "#fff" }}>{btn}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-};
-
-/* -----------------------------
-   CheckersGame stub
------------------------------- */
-const CheckersGame = () => {
-  return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text>ዳማ ኣብ ቀረባ እዋን ክለጠፍ እዩ</Text>
-    </View>
-  );
-};
+const DropdownSearchItem = () => null;
+DropdownSearchItem.displayName = "DropdownSearch.Item";
+DropdownSearch.Item = DropdownSearchItem;
+DropdownSearch.displayName = "DropdownSearch";
 
 /* -----------------------------
    ToolsScreen
@@ -211,7 +191,8 @@ const CheckersGame = () => {
    - Offline fallback
 ------------------------------ */
 export default function ToolsScreen() {
-  const [selectedChatOption, setSelectedChatOption] = useState("translator");
+  const colorScheme = useColorScheme();
+  const palette = colorScheme === "dark" ? DARK_THEME : LIGHT_THEME;
 
   // Translator
   const [translatorInput, setTranslatorInput] = useState("");
@@ -420,109 +401,123 @@ export default function ToolsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.pageBody}>
-        <DropdownSearch
-          selectedValue={selectedChatOption}
-          style={styles.picker}
-          itemStyle={{ color: "#000", fontSize: 16 }}
-          onValueChange={(itemValue) => setSelectedChatOption(itemValue)}
-          placeholder="Select chat option"
-        >
-          <DropdownSearch.Item label="ትርጉም" value="translator" />
-          <DropdownSearch.Item label="ካልኩሌተር" value="calculator" />
-          <DropdownSearch.Item label="ዳማ" value="dama" />
-        </DropdownSearch>
-
-        {selectedChatOption === "translator" && (
-          <View style={styles.translatorContainer}>
-            {/* FROM */}
-            <DropdownSearch
-              selectedValue={translatorFrom}
-              style={styles.translatorPicker}
-              itemStyle={{ color: "#000", fontSize: 16 }}
-              onValueChange={(itemValue) => {
-                setTranslatorFrom(itemValue);
-                setTranslatorInput("");
-                setTranslatorOutput("");
-              }}
-              placeholder="From"
-            >
-              {LANGUAGES.map((lang) => (
-                <DropdownSearch.Item
-                  key={lang.value}
-                  label={lang.label}
-                  value={lang.value}
-                />
-              ))}
-            </DropdownSearch>
-
-           
-
-            <TextInput
-              style={styles.translatorInput}
-              placeholder="ኣብዚ ጽሓፉ"
-              placeholderTextColor="#666"
-              value={translatorInput}
-              onChangeText={setTranslatorInput}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-
-             {/* ✅ Swap button */}
-            <TouchableOpacity
-              onPress={handleSwap}
-              activeOpacity={0.85}
-              style={styles.swapButton}
-            >
-              <Text style={styles.swapButtonText}>⇄</Text>
-            </TouchableOpacity>
-
-            {/* TO */}
-            <DropdownSearch
-              selectedValue={translatorTo}
-              style={styles.translatorPicker}
-              itemStyle={{ color: "#000", fontSize: 16 }}
-              onValueChange={(itemValue) => {
-                setTranslatorTo(itemValue);
-                setTranslatorOutput("");
-              }}
-              placeholder="To"
-            >
-              {/* ✅ For TO, we remove "auto" option */}
-              {LANGUAGES.filter((l) => l.value !== "auto").map((lang) => (
-                <DropdownSearch.Item
-                  key={lang.value}
-                  label={lang.label}
-                  value={lang.value}
-                />
-              ))}
-            </DropdownSearch>
-
-            <TextInput
-              style={styles.translatorInput}
-              editable={false}
-              value={translatorOutput}
-              placeholder="ትርጉም ኣብዚ ክቕረብ እዩ"
-              placeholderTextColor="#666"
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-            />
-
-            <TouchableOpacity
-              style={styles.translateButton}
-              onPress={handleTranslate}
-            >
-              <Text style={styles.translateButtonText}>ተርጉም</Text>
-            </TouchableOpacity>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoiding}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}>
+        <View style={styles.pageBody}>
+          <View
+            style={[
+              styles.titlePill,
+              {
+                backgroundColor: palette.surface,
+                borderColor: palette.border,
+              },
+            ]}>
+            <Text style={[styles.titlePillText, { color: palette.text }]}>ትርጉም</Text>
           </View>
-        )}
 
-        {selectedChatOption === "calculator" && <Calculator />}
-        {selectedChatOption === "dama" && <CheckersGame />}
-      </View>
+          <View style={styles.translatorContainer}>
+              {/* FROM */}
+              <DropdownSearch
+                selectedValue={translatorFrom}
+                style={styles.translatorPicker}
+                itemStyle={{ color: palette.text, fontSize: 16 }}
+                onValueChange={(itemValue) => {
+                  setTranslatorFrom(itemValue);
+                  setTranslatorInput("");
+                  setTranslatorOutput("");
+                }}
+                placeholder="From"
+                palette={palette}
+                textColor={palette.text}
+              >
+                {LANGUAGES.map((lang) => (
+                  <DropdownSearch.Item
+                    key={lang.value}
+                    label={lang.label}
+                    value={lang.value}
+                  />
+                ))}
+              </DropdownSearch>
+
+              <TextInput
+                style={[
+                  styles.translatorInput,
+                  {
+                    borderColor: palette.border,
+                    color: palette.text,
+                    backgroundColor: palette.surfaceStrong,
+                  },
+                ]}
+                placeholder="ኣብዚ ጽሓፉ"
+                placeholderTextColor={palette.muted}
+                value={translatorInput}
+                onChangeText={setTranslatorInput}
+                textAlignVertical="center"
+              />
+
+              {/* ✅ Swap button */}
+              <TouchableOpacity
+                onPress={handleSwap}
+                activeOpacity={0.85}
+                style={[
+                  styles.swapButton,
+                  { backgroundColor: palette.surface, borderColor: palette.border },
+                ]}
+              >
+                <Text style={[styles.swapButtonText, { color: palette.text }]}>⇄</Text>
+              </TouchableOpacity>
+
+              {/* TO */}
+              <DropdownSearch
+                selectedValue={translatorTo}
+                style={styles.translatorPicker}
+                itemStyle={{ color: palette.text, fontSize: 16 }}
+                onValueChange={(itemValue) => {
+                  setTranslatorTo(itemValue);
+                  setTranslatorOutput("");
+                }}
+                placeholder="To"
+                palette={palette}
+                textColor={palette.text}
+              >
+                {/* ✅ For TO, we remove "auto" option */}
+                {LANGUAGES.filter((l) => l.value !== "auto").map((lang) => (
+                  <DropdownSearch.Item
+                    key={lang.value}
+                    label={lang.label}
+                    value={lang.value}
+                  />
+                ))}
+              </DropdownSearch>
+
+              <TextInput
+                style={[
+                  styles.translatorInput,
+                  {
+                    borderColor: palette.border,
+                    color: palette.text,
+                    backgroundColor: palette.surfaceStrong,
+                  },
+                ]}
+                editable={false}
+                value={translatorOutput}
+                placeholder="ትርጉም ኣብዚ ክቕረብ እዩ"
+                placeholderTextColor={palette.muted}
+                textAlignVertical="center"
+              />
+
+              <TouchableOpacity
+                style={[styles.translateButton, { backgroundColor: palette.button }]}
+                onPress={handleTranslate}
+              >
+                <Text style={[styles.translateButtonText, { color: palette.buttonText }]}>ተርጉም</Text>
+              </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -533,58 +528,73 @@ export default function ToolsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+  },
+  keyboardAvoiding: {
+    flex: 1,
   },
 
   pageBody: {
     flex: 1,
     padding: 20,
   },
-
-  picker: {
-    color: "#000",
+  dropdownBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  titlePill: {
+    height: 45,
+    borderRadius: 20,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  titlePillText: {
+    fontSize: 16,
+    fontWeight: "700",
   },
 
   translatorContainer: {
     marginTop: 10,
   },
   translatorPicker: {
-    color: "#000",
+    color: "#111827",
     marginBottom: 5,
-  },
-  translatorInput: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 5,
-    color: "#000",
-    textAlignVertical: "top",
-  },
-  translateButton: {
-    backgroundColor: "#007aff",
-    padding: 10,
-    borderRadius: 5,
+    height: 45,
+    borderRadius: 20,
+    justifyContent: "center",
     alignItems: "center",
   },
+  translatorInput: {
+    height: 45,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 0,
+    marginBottom: 5,
+    textAlignVertical: "center",
+  },
+  translateButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 45,
+    borderRadius: 20,
+    marginTop:20,
+  },
   translateButtonText: {
-    color: "#fff",
     fontSize: 16,
   },
 
   // ✅ swap button styles
   swapButton: {
     alignItems: "center",
-
+    justifyContent: "center",
+    height: 45,
+    borderRadius: 20,
     marginVertical: 6,
-    paddingVertical: 8,
-    borderRadius: 5,
-    backgroundColor: "#f2f2f7",
-    borderColor: "#ddd",
+    paddingVertical: 0,
+    borderWidth: 1,
   },
   swapButtonText: {
     fontSize: 20,
     fontWeight: "900",
-    color: "#111",
   },
 });

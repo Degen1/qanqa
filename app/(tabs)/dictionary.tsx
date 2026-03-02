@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
   FlatList,
-  Platform,
   StyleProp,
   StyleSheet,
   Text,
@@ -12,62 +11,46 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type DictionaryWord = {
-  id: string;
-  word: string;
-  definitions: string[];
-  examples: string[];
-  synonyms?: string[];
-  antonyms?: string[];
+import { DICTIONARY_WORDS, DictionaryWord } from "@/constants/dictionary-words";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+
+const LIGHT = {
+  background: "#ffffff",
+  card: "#ffffff",
+  cardBorder: "#e6e6e6",
+  inputBackground: "#fafafa",
+  inputBorder: "#d1d5db",
+  clearButton: "#eeeeee",
+  textPrimary: "#111827",
+  textSecondary: "#475467",
+  textMuted: "#667085",
+};
+
+const DARK = {
+  background: "#020617",
+  card: "#0f172a",
+  cardBorder: "#1f2937",
+  inputBackground: "#0b1220",
+  inputBorder: "#334155",
+  clearButton: "#1f2937",
+  textPrimary: "#f8fafc",
+  textSecondary: "#cbd5e1",
+  textMuted: "#94a3b8",
 };
 
 export default function DictionaryScreen() {
   const [search, setSearch] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
-
-  const words = useMemo<DictionaryWord[]>(
-    () => [
-      {
-        id: "1",
-        word: "ሰላም",
-        definitions: [
-          "ምስ ሰብ ክትራኸብ ከለኻ እትጥቀመሉ ሰላምታ",
-          "ጸቕጢ ከም ዘይብልካ ንምግላጽ ክትጥቀመሉ ትኽእል ኢኻ",
-        ],
-        examples: ["ሰላም ከመይ ኣለኻ", "ሰላም ኢና ዘለና"],
-        synonyms: ["ሰላማዊ", "ዕርቂ"],
-        antonyms: ["ጦርነት", "ዘይሰላም", "ባእሲ"],
-      },
-      {
-        id: "2",
-        word: "ሰላም",
-        definitions: [
-          "ምስ ሰብ ክትራኸብ ከለኻ እትጥቀመሉ ሰላምታ",
-          "ጸቕጢ ከም ዘይብልካ ንምግላጽ ክትጥቀመሉ ትኽእል ኢኻ",
-        ],
-        examples: ["ሰላም ከመይ ኣለኻ", "ሰላም ኢና ዘለና"],
-        synonyms: ["ሰላማዊ", "ዕርቂ"],
-        antonyms: ["ጦርነት", "ዘይሰላም", "ባእሲ"],
-      },
-      {
-        id: "3",
-        word: "ትምህርቲ",
-        definitions: ["Education; learning or teaching.", "Training or study."],
-        examples: ["ትምህርቲ ንህይወት ኣለዎ ኣገዳሲ ተሳትፎ።"],
-        synonyms: ["ስልጠና", "ምምሃር"],
-        antonyms: ["ድንቁርና"],
-      },
-    ],
-    []
-  );
+  const colorScheme = useColorScheme();
+  const palette = colorScheme === "dark" ? DARK : LIGHT;
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) {
-      return words;
+      return DICTIONARY_WORDS;
     }
 
-    return words.filter((word) =>
+    return DICTIONARY_WORDS.filter((word) =>
       [
         word.word,
         ...word.definitions,
@@ -79,7 +62,7 @@ export default function DictionaryScreen() {
         .toLowerCase()
         .includes(query)
     );
-  }, [search, words]);
+  }, [search]);
 
   const toggleOpen = (id: string) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -91,7 +74,7 @@ export default function DictionaryScreen() {
   ) =>
     (values ?? []).map((value, index) => (
       <View key={`${value}-${index}`} style={styles.bulletRow}>
-        <Text style={styles.bullet}>•</Text>
+        <Text style={[styles.bullet, { color: palette.textSecondary }]}>•</Text>
         <Text style={textStyle}>{value}</Text>
       </View>
     ));
@@ -103,33 +86,35 @@ export default function DictionaryScreen() {
       <TouchableOpacity
         activeOpacity={0.92}
         onPress={() => toggleOpen(item.id)}
-        style={styles.dictCard}
-      >
+        style={[
+          styles.dictCard,
+          { borderColor: palette.cardBorder, backgroundColor: palette.card },
+        ]}>
         <View style={styles.dictHeaderRow}>
-          <Text style={styles.dictWord}>{item.word}</Text>
-          <Text style={styles.dictChevron}>{isOpen ? "▲" : "▼"}</Text>
+          <Text style={[styles.dictWord, { color: palette.textPrimary }]}>{item.word}</Text>
+          <Text style={[styles.dictChevron, { color: palette.textMuted }]}>{isOpen ? "▲" : "▼"}</Text>
         </View>
 
-        <Text style={styles.dictLabel}>ትርጉም</Text>
-        {renderBullets(item.definitions, styles.dictText)}
+        <Text style={[styles.dictLabel, { color: palette.textSecondary }]}>ትርጉም</Text>
+        {renderBullets(item.definitions, [styles.dictText, { color: palette.textPrimary }])}
 
-        <Text style={[styles.dictLabel, { marginTop: 8 }]}>ኣብነት</Text>
-        {renderBullets(item.examples, styles.dictExample)}
+        <Text style={[styles.dictLabel, { marginTop: 8, color: palette.textSecondary }]}>ኣብነት</Text>
+        {renderBullets(item.examples, [styles.dictExample, { color: palette.textPrimary }])}
 
         {isOpen ? (
           <>
-            <Text style={[styles.dictLabel, { marginTop: 10 }]}>ተመሳሳሊ</Text>
+            <Text style={[styles.dictLabel, { marginTop: 10, color: palette.textSecondary }]}>ተመሳሳሊ</Text>
             {item.synonyms && item.synonyms.length > 0 ? (
-              renderBullets(item.synonyms, styles.dictText)
+              renderBullets(item.synonyms, [styles.dictText, { color: palette.textPrimary }])
             ) : (
-              <Text style={styles.dictText}>—</Text>
+              <Text style={[styles.dictText, { color: palette.textMuted }]}>—</Text>
             )}
 
-            <Text style={[styles.dictLabel, { marginTop: 10 }]}>ተጻራሪ</Text>
+            <Text style={[styles.dictLabel, { marginTop: 10, color: palette.textSecondary }]}>ተጻራሪ</Text>
             {item.antonyms && item.antonyms.length > 0 ? (
-              renderBullets(item.antonyms, styles.dictText)
+              renderBullets(item.antonyms, [styles.dictText, { color: palette.textPrimary }])
             ) : (
-              <Text style={styles.dictText}>—</Text>
+              <Text style={[styles.dictText, { color: palette.textMuted }]}>—</Text>
             )}
           </>
         ) : null}
@@ -138,9 +123,13 @@ export default function DictionaryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: palette.background }]}>
       <View style={styles.pageBody}>
-        <View style={styles.dictSearchRow}>
+        <View
+          style={[
+            styles.dictSearchRow,
+            { borderColor: palette.inputBorder, backgroundColor: palette.inputBackground },
+          ]}>
           <TextInput
             value={search}
             onChangeText={(value) => {
@@ -148,8 +137,8 @@ export default function DictionaryScreen() {
               setOpenId(null);
             }}
             placeholder="ቃል ድለዩ..."
-            placeholderTextColor="#999"
-            style={styles.dictSearchInput}
+            placeholderTextColor={palette.textMuted}
+            style={[styles.dictSearchInput, { color: palette.textPrimary }]}
             autoCorrect={false}
             autoCapitalize="none"
           />
@@ -159,9 +148,8 @@ export default function DictionaryScreen() {
                 setSearch("");
                 setOpenId(null);
               }}
-              style={styles.dictClearBtn}
-            >
-              <Text style={styles.dictClearText}>ምጽራይ</Text>
+              style={[styles.dictClearBtn, { backgroundColor: palette.clearButton }]}>
+              <Text style={[styles.dictClearText, { color: palette.textPrimary }]}>ምጽራይ</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -174,7 +162,7 @@ export default function DictionaryScreen() {
           contentContainerStyle={{ paddingBottom: 18 }}
           ListEmptyComponent={
             <View style={{ paddingTop: 30, alignItems: "center" }}>
-              <Text style={{ color: "#666" }}>No matches.</Text>
+              <Text style={{ color: palette.textMuted }}>የለን</Text>
             </View>
           }
         />
@@ -186,7 +174,6 @@ export default function DictionaryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
   },
   pageBody: {
     flex: 1,
@@ -195,36 +182,36 @@ const styles = StyleSheet.create({
   dictSearchRow: {
     flexDirection: "row",
     alignItems: "center",
+    height: 45,
     borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: Platform.OS === "ios" ? 10 : 6,
-    backgroundColor: "#fafafa",
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 0,
     marginBottom: 10,
   },
   dictSearchInput: {
     flex: 1,
-    color: "#111",
+    height: 45,
+    borderRadius: 20,
     fontSize: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 0,
+    textAlignVertical: "center",
   },
   dictClearBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: "#eee",
+    height: 35,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    justifyContent: "center",
+    alignItems: "center",
     marginLeft: 8,
   },
   dictClearText: {
-    color: "#111",
     fontSize: 12,
     fontWeight: "700",
   },
   dictCard: {
     borderWidth: 1,
-    borderColor: "#e6e6e6",
-    backgroundColor: "#fff",
     borderRadius: 10,
     padding: 12,
     marginBottom: 10,
@@ -238,28 +225,23 @@ const styles = StyleSheet.create({
   dictWord: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#111",
   },
   dictChevron: {
     fontSize: 12,
     fontWeight: "900",
-    color: "#666",
     paddingLeft: 10,
   },
   dictLabel: {
     fontSize: 12,
     fontWeight: "800",
-    color: "#444",
     marginBottom: 4,
   },
   dictText: {
     fontSize: 14,
-    color: "#222",
     lineHeight: 20,
   },
   dictExample: {
     fontSize: 14,
-    color: "#222",
     lineHeight: 20,
     fontStyle: "italic",
   },
@@ -270,7 +252,6 @@ const styles = StyleSheet.create({
   },
   bullet: {
     width: 16,
-    color: "#444",
     fontWeight: "900",
     lineHeight: 20,
   },
